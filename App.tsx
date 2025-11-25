@@ -16,6 +16,28 @@ const App: React.FC = () => {
   const [currentView, setView] = useState<ViewState>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Theme Management
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const savedTheme = localStorage.getItem('papersnap_theme');
+    // Default to system preference if no saved theme
+    if (!savedTheme) {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return savedTheme === 'dark';
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('papersnap_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('papersnap_theme', 'light');
+    }
+  }, [darkMode]);
+
+  const toggleTheme = () => setDarkMode(!darkMode);
+
   // Refactored state management using custom hook
   const { 
     activeDocuments, 
@@ -144,27 +166,29 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#f8fafc] dark:bg-slate-900 transition-colors duration-300 overflow-hidden font-sans text-slate-900 dark:text-slate-100">
       {/* Sidebar Navigation */}
       <Sidebar 
         currentView={currentView} 
         setView={setView} 
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
+        darkMode={darkMode}
+        toggleTheme={toggleTheme}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden w-full">
         {/* Header */}
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0">
+        <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 z-10 sticky top-0 transition-colors duration-300">
           <div className="flex items-center">
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none transition-colors"
+              className="lg:hidden p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none transition-colors"
             >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <h1 className="text-xl font-bold text-gray-900 ml-2 lg:ml-0 tracking-tight">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white ml-2 lg:ml-0 tracking-tight">
               {currentView === 'dashboard' ? 'Dashboard' : 
                currentView === 'documents' ? 'My Documents' : 
                currentView === 'folders' ? 'Folders' :
@@ -177,17 +201,17 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-             <button className="p-2 text-gray-400 hover:text-indigo-600 relative transition-colors bg-gray-50 rounded-full hover:bg-indigo-50">
+             <button className="p-2 text-gray-400 hover:text-indigo-600 dark:text-gray-500 dark:hover:text-indigo-400 relative transition-colors bg-gray-50 dark:bg-slate-800 rounded-full hover:bg-indigo-50 dark:hover:bg-slate-700">
                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                {activeDocuments.some(d => d.isNew) && (
-                 <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                 <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-800"></span>
                )}
              </button>
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-4 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] dark:bg-slate-900 p-4 lg:p-8 transition-colors duration-300">
           <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>
