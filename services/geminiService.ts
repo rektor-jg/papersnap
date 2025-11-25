@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { DocType, Category, ExtractedData, DEFAULT_CATEGORIES } from "../types";
+import { GoogleGenAI, Type, Schema, Chat } from "@google/genai";
+import { DocType, Category, ExtractedData, DEFAULT_CATEGORIES, DocumentRecord } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
@@ -102,4 +102,42 @@ export const analyzeDocument = async (base64Data: string, mimeType: string, scan
       summary: "Failed to extract data."
     };
   }
+};
+
+export const createChatSession = (documents: DocumentRecord[]): Chat => {
+  // Minimize token usage by stripping base64 data
+  const contextDocs = documents.map(d => ({
+    id: d.id,
+    type: d.type,
+    vendor: d.vendor,
+    date: d.date,
+    amount: d.amount,
+    currency: d.currency,
+    category: d.category,
+    summary: d.summary
+  }));
+
+  const systemInstruction = `
+    You are PaperSnap AI, a helpful document assistant.
+    You have access to the user's uploaded documents in JSON format.
+    
+    Current Date: ${new Date().toLocaleDateString()}
+    
+    User Documents:
+    ${JSON.stringify(contextDocs)}
+
+    Rules:
+    1. Answer based ONLY on the provided documents.
+    2. If the user asks for a total, calculate it precisely.
+    3. Be concise and friendly.
+    4. Format money values with their currency code (e.g., USD 150.00).
+    5. If asked about specific dates (e.g., "last month"), filter the data accordingly.
+  `;
+
+  return ai.chats.create({
+    model: "gemini-2.5-flash",
+    config: {
+      systemInstruction: systemInstruction,
+    }
+  });
 };

@@ -3,85 +3,37 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { DocumentList } from './components/DocumentList';
 import { Uploader } from './components/Uploader';
-import { ViewState, DocumentRecord, DocType, DEFAULT_CATEGORIES } from './types';
-
-// Mock Data for Initial State
-const MOCK_DOCS: DocumentRecord[] = [
-  {
-    id: '1',
-    type: DocType.INVOICE,
-    vendor: 'AWS Web Services',
-    date: '2023-10-15',
-    amount: 145.50,
-    currency: 'USD',
-    tax: 0,
-    category: 'Services',
-    summary: 'Monthly cloud hosting bill',
-    fileData: 'mockdata', 
-    mimeType: 'application/pdf',
-    createdAt: '2023-10-15T10:00:00Z',
-    status: 'completed',
-    isNew: false
-  },
-  {
-    id: '2',
-    type: DocType.RECEIPT,
-    vendor: 'Shell Station',
-    date: '2023-10-18',
-    amount: 65.20,
-    currency: 'USD',
-    tax: 5.20,
-    category: 'Fuel',
-    summary: 'Gas for company car',
-    fileData: 'mockdata_image_string',
-    mimeType: 'image/jpeg',
-    createdAt: '2023-10-18T14:30:00Z',
-    status: 'completed',
-    isNew: false
-  },
-  {
-    id: '3',
-    type: DocType.INVOICE,
-    vendor: 'Apple Store',
-    date: '2023-10-20',
-    amount: 2499.00,
-    currency: 'USD',
-    tax: 180.00,
-    category: 'Equipment',
-    summary: 'MacBook Pro M2 purchase',
-    fileData: 'mockdata_large_pdf',
-    mimeType: 'application/pdf',
-    createdAt: '2023-10-20T09:15:00Z',
-    status: 'completed',
-    isNew: true
-  }
-];
+import { TrashList } from './components/TrashList';
+import { ChatAssistant } from './components/ChatAssistant';
+import { Settings } from './components/Settings';
+import { ViewState, DocumentRecord, DEFAULT_CATEGORIES } from './types';
+import { useDocuments } from './hooks/useDocuments';
 
 const App: React.FC = () => {
   const [currentView, setView] = useState<ViewState>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // State for Data
-  const [documents, setDocuments] = useState<DocumentRecord[]>(MOCK_DOCS);
+  // Refactored state management using custom hook
+  const { 
+    activeDocuments, 
+    deletedDocuments, 
+    addDocument, 
+    updateDocument, 
+    softDeleteDocument, 
+    restoreDocument, 
+    permanentDeleteDocument, 
+    emptyTrash, 
+    markAsSeen 
+  } = useDocuments();
+
+  // Settings State (kept simple here for now, could be its own hook)
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [defaultCurrency, setDefaultCurrency] = useState('USD');
+  const [defaultTaxRate, setDefaultTaxRate] = useState(0);
 
   const handleUploadComplete = (newDoc: DocumentRecord) => {
-    // Mark as new for visual highlighting
-    const docWithFlag = { ...newDoc, isNew: true };
-    setDocuments(prev => [docWithFlag, ...prev]);
+    addDocument(newDoc);
     setView('documents');
-  };
-
-  const handleUpdateDocument = (updatedDoc: DocumentRecord) => {
-    setDocuments(prev => prev.map(doc => doc.id === updatedDoc.id ? updatedDoc : doc));
-  };
-
-  const handleDeleteDocument = (id: string) => {
-    setDocuments(prev => prev.filter(doc => doc.id !== id));
-  };
-
-  const handleMarkAsSeen = (id: string) => {
-    setDocuments(prev => prev.map(doc => doc.id === id ? { ...doc, isNew: false } : doc));
   };
 
   const renderContent = () => {
@@ -89,19 +41,19 @@ const App: React.FC = () => {
       case 'dashboard':
         return (
           <Dashboard 
-            documents={documents} 
+            documents={activeDocuments} 
             onScanClick={() => setView('upload')}
           />
         );
       case 'documents':
         return (
           <DocumentList 
-            documents={documents} 
+            documents={activeDocuments} 
             categories={categories}
             setCategories={setCategories}
-            onUpdateDocument={handleUpdateDocument}
-            onDeleteDocument={handleDeleteDocument}
-            onMarkAsSeen={handleMarkAsSeen}
+            onUpdateDocument={updateDocument}
+            onDeleteDocument={softDeleteDocument}
+            onMarkAsSeen={markAsSeen}
           />
         );
       case 'upload':
@@ -111,10 +63,36 @@ const App: React.FC = () => {
             onCancel={() => setView('dashboard')} 
           />
         );
+      case 'chat':
+        return (
+          <ChatAssistant 
+            documents={activeDocuments} 
+          />
+        );
+      case 'trash':
+        return (
+          <TrashList 
+            documents={deletedDocuments}
+            onRestore={restoreDocument}
+            onDeleteForever={permanentDeleteDocument}
+            onEmptyTrash={emptyTrash}
+          />
+        );
+      case 'settings':
+        return (
+          <Settings 
+            categories={categories}
+            setCategories={setCategories}
+            defaultCurrency={defaultCurrency}
+            setDefaultCurrency={setDefaultCurrency}
+            defaultTaxRate={defaultTaxRate}
+            setDefaultTaxRate={setDefaultTaxRate}
+          />
+        );
       default:
         return (
           <Dashboard 
-            documents={documents} 
+            documents={activeDocuments} 
             onScanClick={() => setView('upload')}
           />
         );
@@ -145,6 +123,9 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-gray-900 ml-2 lg:ml-0 tracking-tight">
               {currentView === 'dashboard' ? 'Dashboard' : 
                currentView === 'documents' ? 'My Documents' : 
+               currentView === 'trash' ? 'Trash Bin' :
+               currentView === 'chat' ? 'AI Assistant' :
+               currentView === 'settings' ? 'Settings' :
                currentView === 'upload' ? 'Upload' : ''}
             </h1>
           </div>
@@ -152,7 +133,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-4">
              <button className="p-2 text-gray-400 hover:text-indigo-600 relative transition-colors bg-gray-50 rounded-full hover:bg-indigo-50">
                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-               {documents.some(d => d.isNew) && (
+               {activeDocuments.some(d => d.isNew) && (
                  <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
                )}
              </button>

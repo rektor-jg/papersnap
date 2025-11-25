@@ -39,6 +39,7 @@ export interface DocumentRecord extends ExtractedData {
   createdAt: string;
   status: 'processing' | 'completed' | 'error';
   isNew?: boolean; // Visual indicator for newly added items
+  isDeleted?: boolean; // Soft delete flag
 }
 
-export type ViewState = 'dashboard' | 'documents' | 'upload';
+export type ViewState = 'dashboard' | 'documents' | 'upload' | 'trash' | 'chat' | 'settings';
