@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
@@ -6,6 +7,8 @@ import { Uploader } from './components/Uploader';
 import { TrashList } from './components/TrashList';
 import { ChatAssistant } from './components/ChatAssistant';
 import { Settings } from './components/Settings';
+import { FoldersView } from './components/FoldersView';
+import { DocumentDetailModal } from './components/DocumentDetailModal';
 import { ViewState, DocumentRecord, DEFAULT_CATEGORIES } from './types';
 import { useDocuments } from './hooks/useDocuments';
 
@@ -17,20 +20,30 @@ const App: React.FC = () => {
   const { 
     activeDocuments, 
     deletedDocuments, 
+    folders,
     addDocument, 
     updateDocument, 
     softDeleteDocument, 
     restoreDocument, 
     permanentDeleteDocument, 
     emptyTrash, 
-    markAsSeen 
+    markAsSeen,
+    createFolder,
+    deleteFolder,
+    moveDocumentToFolder,
+    moveDocumentsToFolder
   } = useDocuments();
 
-  // Settings State (kept simple here for now, could be its own hook)
+  // Settings State
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [defaultTaxRate, setDefaultTaxRate] = useState(0);
+  const [ocrLanguage, setOcrLanguage] = useState('auto');
+  const [enablePreprocessing, setEnablePreprocessing] = useState(true);
 
+  // Global modal state could be handled here if we wanted to trigger details from anywhere
+  // For now, specific views handle their own modal invocation or we rely on the specific components
+  
   const handleUploadComplete = (newDoc: DocumentRecord) => {
     addDocument(newDoc);
     setView('documents');
@@ -50,11 +63,29 @@ const App: React.FC = () => {
           <DocumentList 
             documents={activeDocuments} 
             categories={categories}
+            folders={folders}
             setCategories={setCategories}
             onUpdateDocument={updateDocument}
             onDeleteDocument={softDeleteDocument}
             onMarkAsSeen={markAsSeen}
+            onMoveDocuments={moveDocumentsToFolder}
           />
+        );
+      case 'folders':
+        return (
+            <FoldersView 
+                documents={activeDocuments}
+                folders={folders}
+                categories={categories}
+                setCategories={setCategories}
+                onUpdateDocument={updateDocument}
+                onDeleteDocument={softDeleteDocument}
+                onMarkAsSeen={markAsSeen}
+                onCreateFolder={createFolder}
+                onDeleteFolder={deleteFolder}
+                onMoveDocument={moveDocumentToFolder}
+                onMoveDocuments={moveDocumentsToFolder}
+            />
         );
       case 'upload':
         return (
@@ -87,6 +118,10 @@ const App: React.FC = () => {
             setDefaultCurrency={setDefaultCurrency}
             defaultTaxRate={defaultTaxRate}
             setDefaultTaxRate={setDefaultTaxRate}
+            ocrLanguage={ocrLanguage}
+            setOcrLanguage={setOcrLanguage}
+            enablePreprocessing={enablePreprocessing}
+            setEnablePreprocessing={setEnablePreprocessing}
           />
         );
       default:
@@ -123,6 +158,7 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold text-gray-900 ml-2 lg:ml-0 tracking-tight">
               {currentView === 'dashboard' ? 'Dashboard' : 
                currentView === 'documents' ? 'My Documents' : 
+               currentView === 'folders' ? 'Folders' :
                currentView === 'trash' ? 'Trash Bin' :
                currentView === 'chat' ? 'AI Assistant' :
                currentView === 'settings' ? 'Settings' :

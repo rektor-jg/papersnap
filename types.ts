@@ -1,4 +1,5 @@
 
+
 export enum DocType {
   RECEIPT = 'RECEIPT',
   INVOICE = 'INVOICE',
@@ -20,6 +21,12 @@ export const DEFAULT_CATEGORIES = [
 
 export type Category = string;
 
+export interface Folder {
+  id: string;
+  name: string;
+  isSystem?: boolean; // For "All" or "Unfiled" if we wanted strictly defined system folders
+}
+
 export interface ExtractedData {
   type: DocType;
   vendor: string; // Used as "Name" or "Title" for generic docs/text
@@ -40,6 +47,7 @@ export interface DocumentRecord extends ExtractedData {
   status: 'processing' | 'completed' | 'error';
   isNew?: boolean; // Visual indicator for newly added items
   isDeleted?: boolean; // Soft delete flag
+  folderId?: string; // ID of the folder this document belongs to
 }
 
-export type ViewState = 'dashboard' | 'documents' | 'upload' | 'trash' | 'chat' | 'settings';
+export type ViewState = 'dashboard' | 'documents' | 'folders' | 'upload' | 'trash' | 'chat' | 'settings';

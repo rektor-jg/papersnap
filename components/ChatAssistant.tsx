@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { createChatSession } from '../services/geminiService';
 import { DocumentRecord, ExtractedData } from '../types';
@@ -92,11 +93,11 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ documents }) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-8rem)] bg-white rounded-lg border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md">
+           <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-sm">
              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
            </div>
            <div>
@@ -110,7 +111,7 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ documents }) => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
         {messages.map((msg) => (
           <div 
             key={msg.id} 
@@ -119,10 +120,10 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ documents }) => {
             <div className={`flex max-w-[85%] md:max-w-[70%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
               
               {/* Avatar */}
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border border-transparent
                 ${msg.role === 'user' 
-                  ? 'bg-indigo-100 text-indigo-700' 
-                  : 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'bg-blue-600 text-white'
                 }`}
               >
                 {msg.role === 'user' ? 'JD' : 'AI'}
@@ -130,10 +131,10 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ documents }) => {
 
               {/* Bubble */}
               <div 
-                className={`p-4 rounded-2xl shadow-sm text-sm leading-relaxed whitespace-pre-wrap
+                className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap
                   ${msg.role === 'user'
-                    ? 'bg-indigo-600 text-white rounded-tr-none'
-                    : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'
+                    ? 'bg-blue-600 text-white rounded-tr-none'
+                    : 'bg-gray-100 text-gray-800 rounded-tl-none'
                   }`}
               >
                 {msg.text}
@@ -145,11 +146,11 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ documents }) => {
         {isLoading && (
           <div className="flex justify-start w-full">
              <div className="flex max-w-[85%] gap-3">
-               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-sm">AI</div>
-               <div className="bg-white border border-gray-200 p-4 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
-                 <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-                 <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-100"></div>
-                 <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-200"></div>
+               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">AI</div>
+               <div className="bg-gray-100 p-4 rounded-2xl rounded-tl-none flex items-center gap-2">
+                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
                </div>
              </div>
           </div>
@@ -158,20 +159,20 @@ export const ChatAssistant: React.FC<ChatAssistantProps> = ({ documents }) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-100">
+      <div className="p-4 bg-white border-t border-gray-200">
         <form onSubmit={handleSend} className="relative">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask about your documents (e.g., 'Total fuel cost last month?')"
-            className="w-full pl-4 pr-14 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white resize-none shadow-inner text-sm transition-all"
+            className="w-full pl-4 pr-14 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm transition-all"
             rows={2}
           />
           <button 
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="absolute right-2 top-2 bottom-2 aspect-square flex items-center justify-center bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:bg-gray-300 transition-colors shadow-sm"
+            className="absolute right-2 top-2 bottom-2 aspect-square flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:bg-gray-300 transition-colors"
           >
             <svg className="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
           </button>

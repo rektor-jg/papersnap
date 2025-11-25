@@ -8,6 +8,10 @@ interface SettingsProps {
   setDefaultCurrency: (currency: string) => void;
   defaultTaxRate: number;
   setDefaultTaxRate: (rate: number) => void;
+  ocrLanguage: string;
+  setOcrLanguage: (lang: string) => void;
+  enablePreprocessing: boolean;
+  setEnablePreprocessing: (enable: boolean) => void;
 }
 
 export const Settings: React.FC<SettingsProps> = ({ 
@@ -16,7 +20,11 @@ export const Settings: React.FC<SettingsProps> = ({
   defaultCurrency,
   setDefaultCurrency,
   defaultTaxRate,
-  setDefaultTaxRate
+  setDefaultTaxRate,
+  ocrLanguage,
+  setOcrLanguage,
+  enablePreprocessing,
+  setEnablePreprocessing
 }) => {
   const [newCategory, setNewCategory] = useState('');
   const [isSaved, setIsSaved] = useState(false);
@@ -51,6 +59,16 @@ export const Settings: React.FC<SettingsProps> = ({
     showSaveFeedback();
   };
 
+  const handleOcrLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setOcrLanguage(e.target.value);
+    showSaveFeedback();
+  };
+
+  const togglePreprocessing = () => {
+    setEnablePreprocessing(!enablePreprocessing);
+    showSaveFeedback();
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
@@ -59,7 +77,7 @@ export const Settings: React.FC<SettingsProps> = ({
            <p className="text-gray-500 mt-1">Manage your preferences and application configuration.</p>
         </div>
         {isSaved && (
-          <div className="flex items-center text-green-600 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 animate-fade-in-up">
+          <div className="flex items-center text-green-700 bg-green-50 px-3 py-1.5 rounded border border-green-200 animate-fade-in-up">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
             <span className="text-sm font-bold">Changes Saved</span>
           </div>
@@ -69,14 +87,14 @@ export const Settings: React.FC<SettingsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Profile Card */}
         <div className="col-span-1 md:col-span-1">
-          <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 h-full">
+          <div className="bg-white p-6 rounded-lg border border-gray-200 h-full">
             <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-500 to-fuchsia-500 flex items-center justify-center text-white text-3xl font-bold shadow-xl mb-4 ring-4 ring-white">
+              <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-3xl font-bold mb-4 border-2 border-slate-100">
                 JD
               </div>
               <h3 className="text-xl font-bold text-gray-900">John Doe</h3>
               <p className="text-sm text-gray-500 font-medium">john.doe@example.com</p>
-              <div className="mt-4 px-4 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase rounded-full tracking-wide">
+              <div className="mt-4 px-4 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold uppercase rounded-full tracking-wide">
                 Free Plan
               </div>
               
@@ -86,7 +104,7 @@ export const Settings: React.FC<SettingsProps> = ({
                    <span className="font-bold text-gray-900">45%</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div className="bg-indigo-600 h-2 rounded-full w-[45%]"></div>
+                  <div className="bg-blue-600 h-2 rounded-full w-[45%]"></div>
                 </div>
               </div>
             </div>
@@ -97,9 +115,9 @@ export const Settings: React.FC<SettingsProps> = ({
         <div className="col-span-1 md:col-span-2 space-y-6">
           
           {/* Preferences */}
-          <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100">
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-               <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+               <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                General Preferences
              </h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -108,7 +126,7 @@ export const Settings: React.FC<SettingsProps> = ({
                   <select 
                     value={defaultCurrency}
                     onChange={handleCurrencyChange}
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4"
+                    className="block w-full rounded-lg border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 px-3"
                   >
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
@@ -120,12 +138,12 @@ export const Settings: React.FC<SettingsProps> = ({
                </div>
                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Default Tax Rate (%)</label>
-                  <div className="relative rounded-xl shadow-sm">
+                  <div className="relative rounded-lg shadow-sm">
                     <input
                       type="number"
                       value={defaultTaxRate}
                       onChange={handleTaxChange}
-                      className="block w-full rounded-xl border-gray-200 bg-gray-50 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 px-4"
+                      className="block w-full rounded-lg border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 px-3"
                       placeholder="0.00"
                     />
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -136,12 +154,53 @@ export const Settings: React.FC<SettingsProps> = ({
              </div>
           </div>
 
+          {/* OCR & Scanning Settings */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+               <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+               OCR & Scanning
+             </h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">OCR Language</label>
+                  <select 
+                    value={ocrLanguage}
+                    onChange={handleOcrLanguageChange}
+                    className="block w-full rounded-lg border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 px-3"
+                  >
+                    <option value="auto">Auto-detect</option>
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="pl">Polish</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-2">Preferred language for text extraction.</p>
+               </div>
+               <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Image Preprocessing</label>
+                  <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <span className="text-sm text-gray-600 font-medium">Enhanced Mode</span>
+                    <button 
+                      onClick={togglePreprocessing}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${enablePreprocessing ? 'bg-blue-600' : 'bg-gray-200'}`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enablePreprocessing ? 'translate-x-5' : 'translate-x-0'}`}
+                      />
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Auto-enhance image contrast and clarity.</p>
+               </div>
+             </div>
+          </div>
+
           {/* Categories Manager */}
-          <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100">
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
              <div className="flex justify-between items-end mb-6">
                 <div>
                    <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                    <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                     Expense Categories
                    </h3>
                    <p className="text-sm text-gray-500 mt-1">Customize the categories used for document classification.</p>
@@ -154,13 +213,13 @@ export const Settings: React.FC<SettingsProps> = ({
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="Add new category..."
-                  className="flex-1 rounded-xl border-gray-200 bg-gray-50 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4"
+                  className="flex-1 rounded-lg border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
                 />
                 <button 
                   onClick={handleAddCategory}
                   disabled={!newCategory.trim()}
-                  className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20"
+                  className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Add
                 </button>
@@ -168,7 +227,7 @@ export const Settings: React.FC<SettingsProps> = ({
 
              <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto">
                {categories.map((cat) => (
-                 <span key={cat} className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200 group hover:border-indigo-200 hover:bg-indigo-50 transition-colors">
+                 <span key={cat} className="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200 group hover:border-blue-200 hover:bg-blue-50 transition-colors">
                    {cat}
                    <button 
                     onClick={() => handleDeleteCategory(cat)}
@@ -182,12 +241,12 @@ export const Settings: React.FC<SettingsProps> = ({
           </div>
 
           {/* Danger Zone */}
-          <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
+          <div className="bg-red-50 p-6 rounded-lg border border-red-100">
              <h3 className="text-lg font-bold text-red-800 mb-2">Danger Zone</h3>
              <p className="text-sm text-red-600 mb-4">Once you delete your account data, there is no going back. Please be certain.</p>
              <button 
                onClick={() => alert("This feature is disabled in the demo.")}
-               className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-50 transition-colors"
+               className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors"
              >
                Delete All Data
              </button>

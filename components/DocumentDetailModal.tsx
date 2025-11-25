@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from "jspdf";
-import { DocumentRecord, DocType } from '../types';
+import { DocumentRecord, DocType, Folder } from '../types';
 
 interface DocumentDetailModalProps {
   document: DocumentRecord;
   categories: string[];
+  folders?: Folder[]; // Optional to keep backward compatibility if not passed immediately
   onClose: () => void;
   onUpdate: (doc: DocumentRecord) => void;
   onDelete: (doc: DocumentRecord) => void;
@@ -14,6 +16,7 @@ interface DocumentDetailModalProps {
 export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   document: docRecord,
   categories,
+  folders = [],
   onClose,
   onUpdate,
   onDelete,
@@ -21,6 +24,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
 }) => {
   const [editVendor, setEditVendor] = useState(docRecord.vendor);
   const [editCategory, setEditCategory] = useState(docRecord.category);
+  const [editFolderId, setEditFolderId] = useState<string>(docRecord.folderId || '');
   const [isDirty, setIsDirty] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
 
@@ -35,6 +39,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
       ...docRecord,
       vendor: editVendor,
       category: editCategory,
+      folderId: editFolderId || undefined,
       isNew: false
     };
     onUpdate(updated);
@@ -67,7 +72,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   const handleExportPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(20);
-    doc.setTextColor(79, 70, 229); 
+    doc.setTextColor(37, 99, 235); // Blue-600
     doc.text("PaperSnap Document Report", 20, 20);
     
     doc.setFontSize(12);
@@ -116,11 +121,11 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
           onClick={onClose}
         ></div>
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div className="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full h-[85vh]">
+        <div className="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full h-[85vh]">
           
           <div className="h-full flex flex-col sm:flex-row items-stretch">
               {/* Left Column: Dark Preview */}
-              <div className="w-full sm:w-1/2 bg-slate-900 border-b sm:border-b-0 sm:border-r border-gray-800 flex flex-col h-1/2 sm:h-full relative group">
+              <div className="w-full sm:w-1/2 bg-slate-900 border-b sm:border-b-0 sm:border-r border-gray-700 flex flex-col h-1/2 sm:h-full relative group">
                 <div className="absolute top-4 left-4 z-10">
                     <span className="px-3 py-1 bg-black/50 backdrop-blur text-xs font-bold text-white rounded-full border border-white/10">
                         {docRecord.mimeType.split('/')[1].toUpperCase()}
@@ -164,7 +169,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                       type="text" 
                       value={editVendor}
                       onChange={(e) => { setEditVendor(e.target.value); setIsDirty(true); }}
-                      className="text-3xl font-bold text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-indigo-600 focus:outline-none bg-transparent w-full transition-colors pb-1 placeholder-gray-300 tracking-tight"
+                      className="text-3xl font-bold text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-blue-600 focus:outline-none bg-transparent w-full transition-colors pb-1 placeholder-gray-300 tracking-tight"
                       placeholder="Document Name"
                     />
                     <div className="flex items-center gap-3 mt-4">
@@ -173,7 +178,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                           {docRecord.date}
                        </div>
                        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${docRecord.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${docRecord.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
                           {docRecord.status === 'completed' ? 'Processed' : docRecord.status}
                        </span>
                     </div>
@@ -183,8 +188,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                   <div className="space-y-8">
                     {/* Financial Card */}
                     {docRecord.type !== DocType.TEXT && (
-                       <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-100 shadow-sm grid grid-cols-2 gap-8 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-50 rounded-bl-full -mr-8 -mt-8"></div>
+                       <div className="bg-slate-50 rounded-lg p-6 border border-gray-200 grid grid-cols-2 gap-8 relative overflow-hidden">
                           <div>
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Amount</p>
                             <p className="text-2xl font-bold text-gray-900">{docRecord.currency} {docRecord.amount.toFixed(2)}</p>
@@ -196,21 +200,41 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                        </div>
                     )}
                     
-                    {/* Category */}
-                    <div>
-                       <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category</label>
-                       <div className="relative">
-                          <select 
-                            value={editCategory}
-                            onChange={(e) => { setEditCategory(e.target.value); setIsDirty(true); }}
-                            className="block w-full appearance-none bg-white border border-gray-200 text-gray-900 text-base font-medium rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block p-4 pr-10 shadow-sm transition-all"
-                          >
-                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                          </div>
-                       </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Category */}
+                        <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category</label>
+                        <div className="relative">
+                            <select 
+                                value={editCategory}
+                                onChange={(e) => { setEditCategory(e.target.value); setIsDirty(true); }}
+                                className="block w-full appearance-none bg-white border border-gray-300 text-gray-900 text-sm font-medium rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 shadow-sm transition-all"
+                            >
+                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                        </div>
+                        </div>
+
+                        {/* Folder */}
+                        <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Folder</label>
+                        <div className="relative">
+                            <select 
+                                value={editFolderId}
+                                onChange={(e) => { setEditFolderId(e.target.value); setIsDirty(true); }}
+                                className="block w-full appearance-none bg-white border border-gray-300 text-gray-900 text-sm font-medium rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 shadow-sm transition-all"
+                            >
+                                <option value="">Unfiled</option>
+                                {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                        </div>
+                        </div>
                     </div>
 
                     {/* Summary / Content */}
@@ -222,7 +246,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                          {docRecord.type === DocType.TEXT && (
                            <button 
                              onClick={handleCopyText}
-                             className="text-xs text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1 uppercase tracking-wider transition-colors"
+                             className="text-xs text-blue-600 font-bold hover:text-blue-800 flex items-center gap-1 uppercase tracking-wider transition-colors"
                            >
                              {copyFeedback ? (
                                <>Copied!</>
@@ -235,7 +259,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                            </button>
                          )}
                       </div>
-                      <div className="bg-gray-50 rounded-xl p-5 border border-gray-200/60 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto custom-scrollbar font-medium">
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-200 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto custom-scrollbar font-medium">
                         {docRecord.summary}
                       </div>
                     </div>
@@ -246,7 +270,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                      {isDirty && (
                        <button 
                           onClick={handleSaveChanges}
-                          className="w-full mb-4 flex justify-center items-center px-4 py-4 border border-transparent shadow-lg shadow-indigo-500/30 text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transform active:scale-[0.99] transition-all"
+                          className="w-full mb-4 flex justify-center items-center px-4 py-3.5 border border-transparent text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors"
                        >
                          Save Changes
                        </button>
@@ -255,7 +279,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                      <div className="flex items-center gap-3 mb-4">
                       <button
                         onClick={handleExportPDF}
-                        className="flex-1 flex justify-center items-center px-4 py-3 border border-gray-200 shadow-sm text-sm font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        className="flex-1 flex justify-center items-center px-4 py-3 border border-gray-200 text-sm font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                       >
                          <svg className="mr-2 h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                         Export PDF
