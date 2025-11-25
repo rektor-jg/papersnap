@@ -50,4 +50,4 @@ export interface DocumentRecord extends ExtractedData {
   folderId?: string; // ID of the folder this document belongs to
 }
 
-export type ViewState = 'dashboard' | 'documents' | 'folders' | 'upload' | 'trash' | 'chat' | 'settings';
+export type ViewState = 'dashboard' | 'documents' | 'folders' | 'upload' | 'trash' | 'chat' | 'settings' | 'pricing';

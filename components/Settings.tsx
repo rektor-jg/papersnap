@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { DocumentRecord } from '../types';
 
 interface SettingsProps {
   categories: string[];
   setCategories: (categories: string[]) => void;
+  documents: DocumentRecord[];
   defaultCurrency: string;
   setDefaultCurrency: (currency: string) => void;
   defaultTaxRate: number;
@@ -17,6 +19,7 @@ interface SettingsProps {
 export const Settings: React.FC<SettingsProps> = ({ 
   categories, 
   setCategories,
+  documents,
   defaultCurrency,
   setDefaultCurrency,
   defaultTaxRate,
@@ -28,6 +31,16 @@ export const Settings: React.FC<SettingsProps> = ({
 }) => {
   const [newCategory, setNewCategory] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+
+  // Calculate approximate storage (mock: 1MB = 1%, max 100MB for free)
+  const storagePercentage = useMemo(() => {
+    const totalBytes = documents.reduce((acc, doc) => acc + (doc.fileData?.length || 0), 0);
+    // Let's assume 100MB is the limit for the free tier for this visual
+    const usedMB = totalBytes / (1024 * 1024);
+    const maxMB = 100;
+    const pct = Math.min((usedMB / maxMB) * 100, 100);
+    return Math.round(pct);
+  }, [documents]);
 
   const handleAddCategory = () => {
     if (newCategory.trim() && !categories.includes(newCategory.trim())) {
@@ -90,10 +103,10 @@ export const Settings: React.FC<SettingsProps> = ({
           <div className="bg-white p-6 rounded-lg border border-gray-200 h-full">
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-3xl font-bold mb-4 border-2 border-slate-100">
-                JD
+                GU
               </div>
-              <h3 className="text-xl font-bold text-gray-900">John Doe</h3>
-              <p className="text-sm text-gray-500 font-medium">john.doe@example.com</p>
+              <h3 className="text-xl font-bold text-gray-900">Guest User</h3>
+              <p className="text-sm text-gray-500 font-medium">guest@papersnap.local</p>
               <div className="mt-4 px-4 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold uppercase rounded-full tracking-wide">
                 Free Plan
               </div>
@@ -101,10 +114,13 @@ export const Settings: React.FC<SettingsProps> = ({
               <div className="mt-8 w-full pt-6 border-t border-gray-100">
                 <div className="flex justify-between items-center text-sm mb-2">
                    <span className="text-gray-500">Storage Used</span>
-                   <span className="font-bold text-gray-900">45%</span>
+                   <span className="font-bold text-gray-900">{storagePercentage}%</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full w-[45%]"></div>
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-1000" 
+                    style={{ width: `${storagePercentage}%` }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -245,7 +261,12 @@ export const Settings: React.FC<SettingsProps> = ({
              <h3 className="text-lg font-bold text-red-800 mb-2">Danger Zone</h3>
              <p className="text-sm text-red-600 mb-4">Once you delete your account data, there is no going back. Please be certain.</p>
              <button 
-               onClick={() => alert("This feature is disabled in the demo.")}
+               onClick={() => {
+                 if(confirm("This will clear your local database (LocalStorage). Are you sure?")) {
+                    localStorage.clear();
+                    window.location.reload();
+                 }
+               }}
                className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors"
              >
                Delete All Data

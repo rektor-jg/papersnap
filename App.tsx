@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { DocumentList } from './components/DocumentList';
@@ -8,7 +8,7 @@ import { TrashList } from './components/TrashList';
 import { ChatAssistant } from './components/ChatAssistant';
 import { Settings } from './components/Settings';
 import { FoldersView } from './components/FoldersView';
-import { DocumentDetailModal } from './components/DocumentDetailModal';
+import { Pricing } from './components/Pricing';
 import { ViewState, DocumentRecord, DEFAULT_CATEGORIES } from './types';
 import { useDocuments } from './hooks/useDocuments';
 
@@ -34,15 +34,21 @@ const App: React.FC = () => {
     moveDocumentsToFolder
   } = useDocuments();
 
-  // Settings State
-  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  // Settings State with Persistence
+  const [categories, setCategories] = useState<string[]>(() => {
+    const saved = localStorage.getItem('papersnap_categories');
+    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
+  });
+
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [defaultTaxRate, setDefaultTaxRate] = useState(0);
   const [ocrLanguage, setOcrLanguage] = useState('auto');
   const [enablePreprocessing, setEnablePreprocessing] = useState(true);
 
-  // Global modal state could be handled here if we wanted to trigger details from anywhere
-  // For now, specific views handle their own modal invocation or we rely on the specific components
+  // Persist Categories
+  useEffect(() => {
+    localStorage.setItem('papersnap_categories', JSON.stringify(categories));
+  }, [categories]);
   
   const handleUploadComplete = (newDoc: DocumentRecord) => {
     addDocument(newDoc);
@@ -114,6 +120,7 @@ const App: React.FC = () => {
           <Settings 
             categories={categories}
             setCategories={setCategories}
+            documents={activeDocuments}
             defaultCurrency={defaultCurrency}
             setDefaultCurrency={setDefaultCurrency}
             defaultTaxRate={defaultTaxRate}
@@ -124,6 +131,8 @@ const App: React.FC = () => {
             setEnablePreprocessing={setEnablePreprocessing}
           />
         );
+      case 'pricing':
+        return <Pricing />;
       default:
         return (
           <Dashboard 
@@ -162,7 +171,8 @@ const App: React.FC = () => {
                currentView === 'trash' ? 'Trash Bin' :
                currentView === 'chat' ? 'AI Assistant' :
                currentView === 'settings' ? 'Settings' :
-               currentView === 'upload' ? 'Upload' : ''}
+               currentView === 'upload' ? 'Upload' : 
+               currentView === 'pricing' ? 'Upgrade Plan' : ''}
             </h1>
           </div>
           

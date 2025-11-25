@@ -1,77 +1,51 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DocumentRecord, DocType, Folder } from '../types';
 
-// Mock Data
-const MOCK_FOLDERS: Folder[] = [
-  { id: 'f1', name: 'Work Projects' },
-  { id: 'f2', name: 'Personal Expenses' },
-  { id: 'f3', name: 'Tax 2023' }
-];
-
-const MOCK_DOCS: DocumentRecord[] = [
-  {
-    id: '1',
-    type: DocType.INVOICE,
-    vendor: 'AWS Web Services',
-    date: '2023-10-15',
-    amount: 145.50,
-    currency: 'USD',
-    tax: 0,
-    category: 'Services',
-    summary: 'Monthly cloud hosting bill',
-    fileData: 'mockdata', 
-    mimeType: 'application/pdf',
-    createdAt: '2023-10-15T10:00:00Z',
-    status: 'completed',
-    isNew: false,
-    isDeleted: false,
-    folderId: 'f1'
-  },
-  {
-    id: '2',
-    type: DocType.RECEIPT,
-    vendor: 'Shell Station',
-    date: '2023-10-18',
-    amount: 65.20,
-    currency: 'USD',
-    tax: 5.20,
-    category: 'Fuel',
-    summary: 'Gas for company car',
-    fileData: 'mockdata', 
-    mimeType: 'image/jpeg',
-    createdAt: '2023-10-18T14:30:00Z',
-    status: 'completed',
-    isNew: false,
-    isDeleted: false,
-    folderId: 'f2'
-  },
-  {
-    id: '3',
-    type: DocType.INVOICE,
-    vendor: 'Apple Store',
-    date: '2023-10-20',
-    amount: 2499.00,
-    currency: 'USD',
-    tax: 180.00,
-    category: 'Equipment',
-    summary: 'MacBook Pro M2 purchase',
-    fileData: 'mockdata', 
-    mimeType: 'application/pdf',
-    createdAt: '2023-10-20T09:15:00Z',
-    status: 'completed',
-    isNew: true,
-    isDeleted: false,
-    folderId: 'f1'
-  }
-];
+const STORAGE_KEY_DOCS = 'papersnap_documents_v1';
+const STORAGE_KEY_FOLDERS = 'papersnap_folders_v1';
 
 export const useDocuments = () => {
-  const [documents, setDocuments] = useState<DocumentRecord[]>(MOCK_DOCS);
-  const [folders, setFolders] = useState<Folder[]>(MOCK_FOLDERS);
+  // Initialize from LocalStorage to ensure data persistence (Production Ready)
+  const [documents, setDocuments] = useState<DocumentRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_DOCS);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load documents from storage", e);
+      return [];
+    }
+  });
+
+  const [folders, setFolders] = useState<Folder[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_FOLDERS);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load folders from storage", e);
+      return [];
+    }
+  });
 
   const activeDocuments = documents.filter(d => !d.isDeleted);
   const deletedDocuments = documents.filter(d => d.isDeleted);
+
+  // Persistence Effects
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_DOCS, JSON.stringify(documents));
+    } catch (e) {
+      console.error("Failed to save documents", e);
+    }
+  }, [documents]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(folders));
+    } catch (e) {
+      console.error("Failed to save folders", e);
+    }
+  }, [folders]);
 
   // Document Actions
   const addDocument = useCallback((newDoc: DocumentRecord) => {
