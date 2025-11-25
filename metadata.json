@@ -1,0 +1,7 @@
+{
+  "name": "PaperSnap",
+  "description": "AI-powered document management for freelancers and SMBs. Capture, extract, and organize invoices and contracts instantly.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
