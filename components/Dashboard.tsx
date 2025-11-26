@@ -37,7 +37,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ documents, onScanClick }) 
     return { totalDocs, readyToExport, storageUsedMb, pieData, recentDocs };
   }, [documents]);
 
-  const COLORS = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe']; // Blue shades
+  // Diverse colors for different types
+  const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
     <div className="space-y-8">

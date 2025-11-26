@@ -1,7 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { DocumentRecord, DocType, Folder } from '../types';
 import { DocumentDetailModal } from './DocumentDetailModal';
+import { generateAndDownloadCSV } from '../utils/exportUtils';
 
 interface DocumentListProps {
   documents: DocumentRecord[];
@@ -34,6 +34,10 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   const [selectedDoc, setSelectedDoc] = useState<DocumentRecord | null>(null);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  // Export States
+  const [exportScope, setExportScope] = useState<'visible' | 'all'>('visible');
 
   // Bulk Action States
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -121,37 +125,10 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     }
   };
 
-  const generateCSV = (docs: DocumentRecord[]) => {
-    const headers = ['Type', 'Name', 'Date', 'Amount', 'Currency', 'Tax', 'Category', 'Summary'];
-    const rows = docs.map(doc => [
-      doc.type,
-      `"${doc.vendor}"`,
-      doc.date,
-      doc.amount,
-      doc.currency,
-      doc.tax,
-      doc.category,
-      `"${doc.summary.replace(/"/g, '""')}"`
-    ]);
-
-    return "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n" 
-      + rows.map(e => e.join(",")).join("\n");
-  };
-
-  const downloadCSV = (docs: DocumentRecord[], filename: string) => {
-    const csvContent = generateCSV(docs);
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleExportAllCSV = () => {
-    downloadCSV(filteredDocs, `papersnap_export_${new Date().toISOString().slice(0,10)}.csv`);
+  const handleExportConfirm = () => {
+    const docsToExport = exportScope === 'visible' ? filteredDocs : documents;
+    generateAndDownloadCSV(docsToExport, `papersnap_export_${new Date().toISOString().slice(0,10)}.csv`);
+    setIsExportModalOpen(false);
   };
 
   return (
@@ -160,11 +137,11 @@ export const DocumentList: React.FC<DocumentListProps> = ({
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Documents List</h2>
         <div className="flex gap-2">
             <button 
-              onClick={handleExportAllCSV}
+              onClick={() => setIsExportModalOpen(true)}
               className="inline-flex items-center px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
             >
               <svg className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              Export List CSV
+              Export
             </button>
         </div>
       </div>
@@ -218,6 +195,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                 type="date" 
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
+                style={{ colorScheme: 'light' }}
                 className="block w-full py-2 px-3 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
            </div>
@@ -227,6 +205,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                 type="date" 
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
+                style={{ colorScheme: 'light' }}
                 className="block w-full py-2 px-3 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
            </div>
@@ -264,8 +243,9 @@ export const DocumentList: React.FC<DocumentListProps> = ({
               <tr>
                 <th scope="col" className="px-6 py-4 w-10">
                   <input 
-                    type="checkbox" 
-                    className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 !bg-white dark:!bg-slate-600 accent-blue-600 cursor-pointer"
+                    type="checkbox"
+                    style={{ colorScheme: 'light' }}
+                    className="h-4 w-4 rounded border border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-700 accent-blue-600 cursor-pointer"
                     checked={filteredDocs.length > 0 && selectedIds.size === filteredDocs.length}
                     onChange={handleToggleSelectAll}
                   />
@@ -294,7 +274,8 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     <td className="px-6 py-4 w-10">
                       <input 
                         type="checkbox" 
-                        className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 !bg-white dark:!bg-slate-600 accent-blue-600 cursor-pointer"
+                        style={{ colorScheme: 'light' }}
+                        className="h-4 w-4 rounded border border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-700 accent-blue-600 cursor-pointer"
                         checked={selectedIds.has(doc.id)}
                         onChange={() => handleToggleSelectOne(doc.id)}
                       />
@@ -436,6 +417,68 @@ export const DocumentList: React.FC<DocumentListProps> = ({
          </div>
       )}
 
+       {/* Export Modal */}
+       {isExportModalOpen && (
+         <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div className="flex items-center justify-center min-h-screen px-4">
+               <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setIsExportModalOpen(false)}></div>
+               <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-slate-700">
+                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Export Documents</h3>
+                 <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">Choose what you want to export.</p>
+
+                 <div className="space-y-4 mb-8">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-2">Scope</label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="scope" 
+                                    checked={exportScope === 'visible'} 
+                                    onChange={() => setExportScope('visible')}
+                                    className="text-blue-600 focus:ring-blue-500" 
+                                />
+                                <span className="text-sm text-gray-900 dark:text-white">Current List ({filteredDocs.length})</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="scope" 
+                                    checked={exportScope === 'all'} 
+                                    onChange={() => setExportScope('all')}
+                                    className="text-blue-600 focus:ring-blue-500" 
+                                />
+                                <span className="text-sm text-gray-900 dark:text-white">All Documents ({documents.length})</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                         <label className="block text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-2">Format</label>
+                         <div className="flex items-center p-3 border border-gray-200 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700/50">
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">CSV (Spreadsheet)</span>
+                         </div>
+                    </div>
+                 </div>
+
+                 <div className="flex justify-end gap-3">
+                   <button 
+                    onClick={() => setIsExportModalOpen(false)}
+                    className="px-4 py-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg font-medium transition-colors"
+                   >
+                     Cancel
+                   </button>
+                   <button 
+                    onClick={handleExportConfirm}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                   >
+                     Export CSV
+                   </button>
+                 </div>
+               </div>
+            </div>
+         </div>
+      )}
+
       {/* Manage Categories Modal */}
       {isManageCategoriesOpen && (
          <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
@@ -450,7 +493,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="New category name..."
-                    className="flex-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg px-4 py-2 text-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="flex-1 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg px-4 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                    />
                    <button 
                     onClick={handleAddCategory}

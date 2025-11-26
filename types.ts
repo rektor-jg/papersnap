@@ -50,4 +50,18 @@ export interface DocumentRecord extends ExtractedData {
   folderId?: string; // ID of the folder this document belongs to
 }
 
-export type ViewState = 'dashboard' | 'documents' | 'folders' | 'upload' | 'trash' | 'chat' | 'settings' | 'pricing';
+export interface Flashcard {
+  front: string;
+  back: string;
+}
+
+export interface FlashcardSet {
+  id: string;
+  title: string;
+  description?: string;
+  createdAt: string;
+  cards: Flashcard[];
+  sourceDocIds: string[]; // IDs of documents used to generate this set
+}
+
+export type ViewState = 'dashboard' | 'documents' | 'folders' | 'flashcards' | 'upload' | 'trash' | 'chat' | 'settings' | 'pricing';

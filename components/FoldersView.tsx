@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { DocumentRecord, Folder } from '../types';
 import { DocumentList } from './DocumentList';
@@ -151,21 +150,21 @@ export const FoldersView: React.FC<FoldersViewProps> = ({
       {/* Create Folder Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Create New Folder</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-sm w-full p-6 border border-gray-200 dark:border-slate-700">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Create New Folder</h3>
                 <input 
                     type="text" 
                     value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
                     placeholder="Folder Name (e.g. Work, Taxes)"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 mb-6 text-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg px-4 py-2.5 mb-6 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                 />
                 <div className="flex justify-end gap-3">
                     <button 
                         onClick={() => setIsCreateModalOpen(false)}
-                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                        className="px-4 py-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg font-medium transition-colors"
                     >
                         Cancel
                     </button>

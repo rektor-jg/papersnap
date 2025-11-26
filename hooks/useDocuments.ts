@@ -1,12 +1,13 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { DocumentRecord, DocType, Folder } from '../types';
+import { DocumentRecord, Folder, FlashcardSet } from '../types';
 
 const STORAGE_KEY_DOCS = 'papersnap_documents_v1';
 const STORAGE_KEY_FOLDERS = 'papersnap_folders_v1';
+const STORAGE_KEY_FLASHCARDS = 'papersnap_flashcards_v1';
 
 export const useDocuments = () => {
-  // Initialize from LocalStorage to ensure data persistence (Production Ready)
+  // Initialize from LocalStorage
   const [documents, setDocuments] = useState<DocumentRecord[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_DOCS);
@@ -23,6 +24,16 @@ export const useDocuments = () => {
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       console.error("Failed to load folders from storage", e);
+      return [];
+    }
+  });
+
+  const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_FLASHCARDS);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load flashcards from storage", e);
       return [];
     }
   });
@@ -46,6 +57,14 @@ export const useDocuments = () => {
       console.error("Failed to save folders", e);
     }
   }, [folders]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_FLASHCARDS, JSON.stringify(flashcardSets));
+    } catch (e) {
+      console.error("Failed to save flashcards", e);
+    }
+  }, [flashcardSets]);
 
   // Document Actions
   const addDocument = useCallback((newDoc: DocumentRecord) => {
@@ -84,7 +103,6 @@ export const useDocuments = () => {
   }, []);
 
   const deleteFolder = useCallback((folderId: string) => {
-    // Move docs in this folder to "Unfiled" (undefined folderId)
     setDocuments(prev => prev.map(doc => doc.folderId === folderId ? { ...doc, folderId: undefined } : doc));
     setFolders(prev => prev.filter(f => f.id !== folderId));
   }, []);
@@ -97,11 +115,21 @@ export const useDocuments = () => {
     setDocuments(prev => prev.map(doc => docIds.includes(doc.id) ? { ...doc, folderId } : doc));
   }, []);
 
+  // Flashcard Actions
+  const createFlashcardSet = useCallback((set: FlashcardSet) => {
+    setFlashcardSets(prev => [set, ...prev]);
+  }, []);
+
+  const deleteFlashcardSet = useCallback((id: string) => {
+    setFlashcardSets(prev => prev.filter(s => s.id !== id));
+  }, []);
+
   return {
     documents,
     activeDocuments,
     deletedDocuments,
     folders,
+    flashcardSets,
     addDocument,
     updateDocument,
     softDeleteDocument,
@@ -112,6 +140,8 @@ export const useDocuments = () => {
     createFolder,
     deleteFolder,
     moveDocumentToFolder,
-    moveDocumentsToFolder
+    moveDocumentsToFolder,
+    createFlashcardSet,
+    deleteFlashcardSet
   };
 };

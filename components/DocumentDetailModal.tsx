@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { jsPDF } from "jspdf";
 import { DocumentRecord, DocType, Folder } from '../types';
+import { generateAndDownloadPDF } from '../utils/exportUtils';
 
 interface DocumentDetailModalProps {
   document: DocumentRecord;
   categories: string[];
-  folders?: Folder[]; // Optional to keep backward compatibility if not passed immediately
+  folders?: Folder[]; 
   onClose: () => void;
   onUpdate: (doc: DocumentRecord) => void;
   onDelete: (doc: DocumentRecord) => void;
@@ -70,47 +70,7 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
   };
 
   const handleExportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.setTextColor(37, 99, 235); // Blue-600
-    doc.text("PaperSnap Document Report", 20, 20);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    
-    let yPos = 40;
-    const lineHeight = 10;
-
-    const addField = (label: string, value: string) => {
-      doc.setFont("helvetica", "bold");
-      doc.text(label + ":", 20, yPos);
-      doc.setFont("helvetica", "normal");
-      doc.text(value, 60, yPos);
-      yPos += lineHeight;
-    };
-
-    addField("Name", docRecord.vendor);
-    addField("Date", docRecord.date);
-    addField("Type", docRecord.type);
-    addField("Category", docRecord.category);
-    
-    if (docRecord.type !== DocType.TEXT) {
-      addField("Amount", `${docRecord.currency} ${docRecord.amount.toFixed(2)}`);
-      addField("Tax/VAT", `${docRecord.currency} ${docRecord.tax.toFixed(2)}`);
-    }
-
-    addField("Status", docRecord.status);
-    
-    yPos += 5;
-    doc.setFont("helvetica", "bold");
-    doc.text(docRecord.type === DocType.TEXT ? "Content:" : "Summary:", 20, yPos);
-    yPos += 7;
-    doc.setFont("helvetica", "normal");
-    
-    const splitSummary = doc.splitTextToSize(docRecord.summary, 170);
-    doc.text(splitSummary, 20, yPos);
-    
-    doc.save(`${docRecord.vendor}_${docRecord.date}.pdf`);
+    generateAndDownloadPDF(docRecord);
   };
 
   return (
@@ -162,141 +122,141 @@ export const DocumentDetailModal: React.FC<DocumentDetailModalProps> = ({
                 </button>
 
                 <div className="p-8 sm:p-10 flex-1 flex flex-col">
-                  {/* Header */}
-                  <div className="mb-8 pr-10">
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Vendor / Name</label>
-                    <input 
-                      type="text" 
-                      value={editVendor}
-                      onChange={(e) => { setEditVendor(e.target.value); setIsDirty(true); }}
-                      className="text-3xl font-bold text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-blue-600 focus:outline-none bg-transparent w-full transition-colors pb-1 placeholder-gray-300 tracking-tight"
-                      placeholder="Document Name"
-                    />
-                    <div className="flex items-center gap-3 mt-4">
-                       <div className="flex items-center text-sm text-gray-500 font-medium">
-                          <svg className="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                          {docRecord.date}
-                       </div>
-                       <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${docRecord.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
-                          {docRecord.status === 'completed' ? 'Processed' : docRecord.status}
-                       </span>
+                    {/* Header */}
+                    <div className="mb-8 pr-10">
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Vendor / Name</label>
+                      <input 
+                        type="text" 
+                        value={editVendor}
+                        onChange={(e) => { setEditVendor(e.target.value); setIsDirty(true); }}
+                        className="text-3xl font-bold text-gray-900 border-b-2 border-transparent hover:border-gray-200 focus:border-blue-600 focus:outline-none bg-transparent w-full transition-colors pb-1 placeholder-gray-300 tracking-tight"
+                        placeholder="Document Name"
+                      />
+                      <div className="flex items-center gap-3 mt-4">
+                        <div className="flex items-center text-sm text-gray-500 font-medium">
+                            <svg className="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            {docRecord.date}
+                        </div>
+                        <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${docRecord.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                            {docRecord.status === 'completed' ? 'Processed' : docRecord.status}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Main Details Grid */}
-                  <div className="space-y-8">
-                    {/* Financial Card */}
-                    {docRecord.type !== DocType.TEXT && (
-                       <div className="bg-slate-50 rounded-lg p-6 border border-gray-200 grid grid-cols-2 gap-8 relative overflow-hidden">
+                    {/* Main Details Grid */}
+                    <div className="space-y-8">
+                      {/* Financial Card */}
+                      {docRecord.type !== DocType.TEXT && (
+                        <div className="bg-slate-50 rounded-lg p-6 border border-gray-200 grid grid-cols-2 gap-8 relative overflow-hidden">
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Amount</p>
+                              <p className="text-2xl font-bold text-gray-900">{docRecord.currency} {docRecord.amount.toFixed(2)}</p>
+                            </div>
+                            <div className="border-l border-gray-200 pl-8">
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tax / VAT</p>
+                              <p className="text-xl font-semibold text-gray-600">{docRecord.currency} {docRecord.tax.toFixed(2)}</p>
+                            </div>
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Category */}
                           <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Amount</p>
-                            <p className="text-2xl font-bold text-gray-900">{docRecord.currency} {docRecord.amount.toFixed(2)}</p>
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category</label>
+                          <div className="relative">
+                              <select 
+                                  value={editCategory}
+                                  onChange={(e) => { setEditCategory(e.target.value); setIsDirty(true); }}
+                                  className="block w-full appearance-none bg-white border border-gray-300 text-gray-900 text-sm font-medium rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 shadow-sm transition-all"
+                              >
+                                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                              </div>
                           </div>
-                          <div className="border-l border-gray-200 pl-8">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tax / VAT</p>
-                            <p className="text-xl font-semibold text-gray-600">{docRecord.currency} {docRecord.tax.toFixed(2)}</p>
                           </div>
-                       </div>
-                    )}
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Category */}
-                        <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Category</label>
-                        <div className="relative">
-                            <select 
-                                value={editCategory}
-                                onChange={(e) => { setEditCategory(e.target.value); setIsDirty(true); }}
-                                className="block w-full appearance-none bg-white border border-gray-300 text-gray-900 text-sm font-medium rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 shadow-sm transition-all"
-                            >
-                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                        </div>
-                        </div>
 
-                        {/* Folder */}
-                        <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Folder</label>
-                        <div className="relative">
-                            <select 
-                                value={editFolderId}
-                                onChange={(e) => { setEditFolderId(e.target.value); setIsDirty(true); }}
-                                className="block w-full appearance-none bg-white border border-gray-300 text-gray-900 text-sm font-medium rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 shadow-sm transition-all"
+                          {/* Folder */}
+                          <div>
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Folder</label>
+                          <div className="relative">
+                              <select 
+                                  value={editFolderId}
+                                  onChange={(e) => { setEditFolderId(e.target.value); setIsDirty(true); }}
+                                  className="block w-full appearance-none bg-white border border-gray-300 text-gray-900 text-sm font-medium rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 block p-3 pr-10 shadow-sm transition-all"
+                              >
+                                  <option value="">Unfiled</option>
+                                  {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                              </div>
+                          </div>
+                          </div>
+                      </div>
+
+                      {/* Summary / Content */}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-3">
+                          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            {docRecord.type === DocType.TEXT ? 'Extracted Text' : 'AI Summary'}
+                          </label>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={handleCopyText}
+                              className="text-xs text-blue-600 font-bold hover:text-blue-800 flex items-center gap-1 uppercase tracking-wider transition-colors"
                             >
-                                <option value="">Unfiled</option>
-                                {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
+                              {copyFeedback ? (
+                                <>Copied!</>
+                              ) : (
+                                <>
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                  Copy
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
+                        <div className="bg-gray-50 rounded-lg p-5 border border-gray-200 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto custom-scrollbar font-medium font-mono">
+                          {docRecord.summary}
                         </div>
+                      </div>
                     </div>
 
-                    {/* Summary / Content */}
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-3">
-                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">
-                           {docRecord.type === DocType.TEXT ? 'Extracted Text' : 'AI Summary'}
-                         </label>
-                         {docRecord.type === DocType.TEXT && (
-                           <button 
-                             onClick={handleCopyText}
-                             className="text-xs text-blue-600 font-bold hover:text-blue-800 flex items-center gap-1 uppercase tracking-wider transition-colors"
-                           >
-                             {copyFeedback ? (
-                               <>Copied!</>
-                             ) : (
-                               <>
-                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                                 Copy
-                               </>
-                             )}
-                           </button>
-                         )}
+                    {/* Footer Actions */}
+                    <div className="mt-auto pt-10">
+                      {isDirty && (
+                        <button 
+                            onClick={handleSaveChanges}
+                            className="w-full mb-4 flex justify-center items-center px-4 py-3.5 border border-transparent text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors"
+                        >
+                          Save Changes
+                        </button>
+                      )}
+                      
+                      <div className="flex items-center gap-3 mb-4">
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex-1 flex justify-center items-center px-4 py-3 border border-gray-200 text-sm font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                        >
+                          <svg className="mr-2 h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                          Export PDF
+                        </button>
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-200 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto custom-scrollbar font-medium">
-                        {docRecord.summary}
+                      
+                      <div className="border-t border-gray-100 pt-4 flex justify-center">
+                        <button 
+                          onClick={() => onDelete(docRecord)}
+                          className="flex items-center text-sm font-semibold text-red-500 hover:text-red-700 transition-colors px-4 py-2 rounded-lg hover:bg-red-50"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          Move to Trash
+                        </button>
                       </div>
                     </div>
                   </div>
-
-                  {/* Footer Actions */}
-                  <div className="mt-auto pt-10">
-                     {isDirty && (
-                       <button 
-                          onClick={handleSaveChanges}
-                          className="w-full mb-4 flex justify-center items-center px-4 py-3.5 border border-transparent text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors"
-                       >
-                         Save Changes
-                       </button>
-                     )}
-                     
-                     <div className="flex items-center gap-3 mb-4">
-                      <button
-                        onClick={handleExportPDF}
-                        className="flex-1 flex justify-center items-center px-4 py-3 border border-gray-200 text-sm font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                      >
-                         <svg className="mr-2 h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                        Export PDF
-                      </button>
-                    </div>
-                    
-                    <div className="border-t border-gray-100 pt-4 flex justify-center">
-                      <button 
-                        onClick={() => onDelete(docRecord)}
-                        className="flex items-center text-sm font-semibold text-red-500 hover:text-red-700 transition-colors px-4 py-2 rounded-lg hover:bg-red-50"
-                      >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        Move to Trash
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </div>
           </div>
         </div>

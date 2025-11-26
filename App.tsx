@@ -8,41 +8,24 @@ import { TrashList } from './components/TrashList';
 import { ChatAssistant } from './components/ChatAssistant';
 import { Settings } from './components/Settings';
 import { FoldersView } from './components/FoldersView';
+import { FlashcardsView } from './components/FlashcardsView';
 import { Pricing } from './components/Pricing';
 import { ViewState, DocumentRecord, DEFAULT_CATEGORIES } from './types';
 import { useDocuments } from './hooks/useDocuments';
+import { useTheme } from './hooks/useTheme';
 
 const App: React.FC = () => {
   const [currentView, setView] = useState<ViewState>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Theme Management
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const savedTheme = localStorage.getItem('papersnap_theme');
-    // Default to system preference if no saved theme
-    if (!savedTheme) {
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return savedTheme === 'dark';
-  });
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('papersnap_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('papersnap_theme', 'light');
-    }
-  }, [darkMode]);
-
-  const toggleTheme = () => setDarkMode(!darkMode);
-
-  // Refactored state management using custom hook
+  // Custom Hooks
+  const { darkMode, toggleTheme } = useTheme();
+  
   const { 
     activeDocuments, 
     deletedDocuments, 
     folders,
+    flashcardSets,
     addDocument, 
     updateDocument, 
     softDeleteDocument, 
@@ -53,7 +36,9 @@ const App: React.FC = () => {
     createFolder,
     deleteFolder,
     moveDocumentToFolder,
-    moveDocumentsToFolder
+    moveDocumentsToFolder,
+    createFlashcardSet,
+    deleteFlashcardSet
   } = useDocuments();
 
   // Settings State with Persistence
@@ -114,6 +99,15 @@ const App: React.FC = () => {
                 onMoveDocument={moveDocumentToFolder}
                 onMoveDocuments={moveDocumentsToFolder}
             />
+        );
+      case 'flashcards':
+        return (
+          <FlashcardsView
+            documents={activeDocuments}
+            flashcardSets={flashcardSets}
+            onCreateSet={createFlashcardSet}
+            onDeleteSet={deleteFlashcardSet}
+          />
         );
       case 'upload':
         return (
@@ -192,6 +186,7 @@ const App: React.FC = () => {
               {currentView === 'dashboard' ? 'Dashboard' : 
                currentView === 'documents' ? 'My Documents' : 
                currentView === 'folders' ? 'Folders' :
+               currentView === 'flashcards' ? 'Flashcards' :
                currentView === 'trash' ? 'Trash Bin' :
                currentView === 'chat' ? 'AI Assistant' :
                currentView === 'settings' ? 'Settings' :

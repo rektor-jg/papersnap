@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Schema, Chat } from "@google/genai";
 import { DocType, Category, ExtractedData, DEFAULT_CATEGORIES, DocumentRecord } from "../types";
 
@@ -49,16 +50,54 @@ const extractionSchema: Schema = {
   required: ["type", "vendor", "date", "amount", "currency", "category", "summary"]
 };
 
+// Flashcard Schema
+const flashcardSchema: Schema = {
+  type: Type.ARRAY,
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      front: { type: Type.STRING, description: "The question or concept on the front of the card." },
+      back: { type: Type.STRING, description: "The answer or definition on the back." }
+    },
+    required: ["front", "back"]
+  }
+};
+
 export type ScanMode = 'finance' | 'document' | 'text';
+
+export interface Flashcard {
+  front: string;
+  back: string;
+}
 
 export const analyzeDocument = async (base64Data: string, mimeType: string, scanMode: ScanMode = 'finance'): Promise<ExtractedData> => {
   try {
-    let promptText = "Analyze this document. Extract the key financial details. If some fields are missing (like tax), make a best guess or set to 0. Format the date strictly as YYYY-MM-DD.";
+    let systemPrompt = "Analyze this document.";
     
     if (scanMode === 'text') {
-      promptText = "Perform OCR on this document. Extract all visible text. Set 'type' to 'TEXT'. Set 'vendor' to the Main Title or First Line of the text. Set 'summary' to the full extracted text content. Set 'amount' and 'tax' to 0. Set 'category' to 'Uncategorized' if not clear.";
+      systemPrompt = `
+        Perform OCR on this document.
+        - Extract all visible text.
+        - Set 'type' to 'TEXT'.
+        - Set 'vendor' to the Main Title or First Line of the text.
+        - IMPORTANT: In the 'summary' field, provide the extracted text formatted in clear MARKDOWN. Use headers (#), bullet points (-), and bolding (**) to preserve structure and readability.
+        - Set 'amount' and 'tax' to 0.
+        - Set 'category' to 'Uncategorized'.
+      `;
     } else if (scanMode === 'document') {
-      promptText = "Analyze this general document (contract, letter, etc). Extract the 'vendor' as the sender or main party. Set 'amount' to 0 if not financial. Summarize the content in 'summary'.";
+      systemPrompt = `
+        Analyze this general document (contract, letter, etc).
+        - Extract the 'vendor' as the sender or main party.
+        - Set 'amount' to 0 if not financial.
+        - Summarize the content in 'summary'.
+      `;
+    } else {
+        // Finance mode
+        systemPrompt = `
+          Analyze this document. Extract the key financial details.
+          - If some fields are missing (like tax), make a best guess or set to 0.
+          - Format the date strictly as YYYY-MM-DD.
+        `;
     }
 
     const response = await ai.models.generateContent({
@@ -72,7 +111,7 @@ export const analyzeDocument = async (base64Data: string, mimeType: string, scan
             }
           },
           {
-            text: promptText
+            text: systemPrompt
           }
         ]
       },
@@ -101,6 +140,35 @@ export const analyzeDocument = async (base64Data: string, mimeType: string, scan
       category: "Uncategorized",
       summary: "Failed to extract data."
     };
+  }
+};
+
+export const generateFlashcards = async (textContext: string): Promise<Flashcard[]> => {
+  try {
+    const prompt = `
+      Create a set of 5-10 high-quality flashcards (Question & Answer) based on the following text.
+      Focus on key concepts, definitions, and important facts useful for a student studying this material.
+      
+      Text:
+      ${textContext.substring(0, 10000)}
+    `;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { text: prompt },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: flashcardSchema,
+        temperature: 0.4
+      }
+    });
+
+    const result = response.text;
+    if (!result) return [];
+    return JSON.parse(result) as Flashcard[];
+  } catch (error) {
+    console.error("Flashcard generation error", error);
+    return [];
   }
 };
 
